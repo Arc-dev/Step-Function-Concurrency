@@ -1,0 +1,52 @@
+{
+  "StartAt": "Pass State",
+  "States": {
+    "Pass State": {
+      "Type": "Wait",
+      "Seconds": 2,
+      "Next": "Call Lambda"
+    },
+    "Call Lambda": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "arn:aws:lambda:eu-west-1:ACC_ID:function:StepFunctionCheckExecutions:$LATEST",
+        "Payload": {
+          "Input.$": "$",
+          "TaskToken.$": "$$.Task.Token",
+          "SFContext.$": "$$"
+        }
+      },
+      "Next": "Choice State",
+      "TimeoutSeconds": 10
+    },
+    "Choice State": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Not": {
+            "Variable": "$.result",
+            "StringEquals": "Failed"
+          },
+          "Next": "Success State"
+        }
+      ],
+      "Default": "Fail State"
+    },
+    "Success State": {
+      "Type": "Wait",
+      "Seconds": 2,
+      "Next": "End State"
+    },
+    "End State": {
+      "Type": "Wait",
+      "Seconds": 2,
+      "End": true
+    },
+    "Fail State": {
+      "Type": "Wait",
+      "Seconds": 2,
+      "End": true
+    }
+  }
+}
