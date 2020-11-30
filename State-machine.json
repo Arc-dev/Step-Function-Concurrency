@@ -9,23 +9,33 @@
     "Call Lambda": {
       "Type": "Task",
       "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "TimeoutSeconds": 300,
+      "HeartbeatSeconds": 60,
       "Parameters": {
-        "FunctionName": "arn:aws:lambda:eu-west-1:ACC_ID:function:StepFunctionCheckExecutions:$LATEST",
+        "FunctionName": "arn:aws:lambda:eu-west-1:<Account-ID>:function:StepFunctionCheckExecutions:$LATEST",
         "Payload": {
           "Input.$": "$",
           "TaskToken.$": "$$.Task.Token",
-          "SFContext.$": "$$"
+          "SFContext.$": "$$",
+          "ResultPath": "$.taskresult"
         }
       },
-      "Next": "Choice State",
-      "TimeoutSeconds": 10
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "Lambda.Unknown"
+          ],
+          "Next": "Fail State"
+        }
+      ],
+      "Next": "Choice State"
     },
     "Choice State": {
       "Type": "Choice",
       "Choices": [
         {
           "Not": {
-            "Variable": "$.result",
+            "Variable": "$",
             "StringEquals": "Failed"
           },
           "Next": "Success State"
